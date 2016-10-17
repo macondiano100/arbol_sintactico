@@ -25,7 +25,7 @@ void buffered_stream::guardar_sig_linea()
 void buffered_stream::retroceso()
 {
     if(!buffer_linea.unget()){
-        //retroceder linea actual
+        //retroceder linea token_actual
         buffer_linea.clear();
         archivo.clear();
         archivo.seekg(-((int)buffer_linea.str().size()),archivo.cur);

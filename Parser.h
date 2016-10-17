@@ -6,16 +6,18 @@
 #define ARBOL_SINTACTICO_PARSER_H
 
 #include "lexico/lexico.h"
+#include "Nodo_Sintactico.h"
 
 class Parser {
     using Tipo_Token=Token::Tipo_Token ;
     Lexico lexico;
-    bool S();
-    bool A();
-    bool E();
-    bool M();
-    bool F();
+    Nodo_Sintactico * S();
+    Nodo_Sintactico * A();
+    Nodo_Sintactico * E();
+    Nodo_Sintactico * M();
+    Nodo_Sintactico * F();
     bool comprueba(Token::Tipo_Token);
+    Token token_actual;
 public:
     Parser(std::istream &archivo):lexico(archivo){lexico++;}
     bool analiza();

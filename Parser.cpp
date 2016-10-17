@@ -6,51 +6,108 @@
 #include "Parser.h"
 
 bool Parser::comprueba(Tipo_Token t) {
-    std::cout<<lexico->lexema()<<std::endl;
     if(lexico->tipo()==t){
+        token_actual=*lexico;
         lexico++;
         return true;
     }
     else return false;
 }
 
-bool Parser::F() {
-    return comprueba(Tipo_Token::ENTERO)|| comprueba(Tipo_Token::IDENTIFICADOR)||
-            (comprueba(Tipo_Token::PARENTESIS_ABRE)&&E()&&comprueba(Tipo_Token::PARENTESIS_CIERRA));
+Nodo_Sintactico * Parser::F() {
+    if(comprueba((Tipo_Token::ENTERO))) return new Nodo_Sintactico("entero",token_actual.lexema());
+    else if(comprueba(Tipo_Token::IDENTIFICADOR))
+    {
+        return new Nodo_Sintactico("identificador",token_actual.lexema());
+    }
+    else if(comprueba(Tipo_Token::PARENTESIS_ABRE)){
+        auto nodo=E();
+        if(nodo!= nullptr&&comprueba(Tipo_Token::PARENTESIS_CIERRA)) return nodo;
+        else return nullptr;
+    }
+    return nullptr;
 }
 
-bool Parser::M() {
-    if(F())
+Nodo_Sintactico * Parser::M() {
+    Nodo_Sintactico *aux,*res;
+    aux=F();
+    if(aux!= nullptr)
     {
+        res=aux;
         while(comprueba(Tipo_Token::OP_MULT))
         {
-            if(!F()) return false;
+            aux=new Nodo_Sintactico("multiplicacion");
+            aux->hijos.push_back(res);
+            res=aux;
+            aux=F();
+            if(aux== nullptr) return nullptr;
+            else{
+                res->hijos.push_back(aux);
+            }
         }
-        return true;
+        return res;
     }
-    else return false;
+    else return nullptr;
 }
-bool Parser::A() {
-    return comprueba(Tipo_Token::IDENTIFICADOR)&&comprueba(Tipo_Token::OP_ASIGNACION) && E() &&comprueba(Tipo_Token::SEMICOLON);
-}
-bool Parser::S() {
-    while(lexico->tipo()==Tipo_Token::IDENTIFICADOR){
-        if(!A()) return false;
-    }
-    return true;
-}
-bool Parser::E() {
-    if(M())
+Nodo_Sintactico * Parser::A() {
+    if (comprueba(Tipo_Token::IDENTIFICADOR))
     {
+        auto res=new Nodo_Sintactico("asignacion");
+        res->hijos.push_back(new Nodo_Sintactico("identificador",token_actual.lexema()));
+        if(comprueba(Tipo_Token::OP_ASIGNACION)){
+            Nodo_Sintactico* aux=E();
+            if(aux != nullptr && comprueba(Tipo_Token::SEMICOLON)) {
+                res->hijos.push_back(aux);
+                return res;
+            }
+        }
+    }
+    return nullptr;
+}
+Nodo_Sintactico * Parser::S() {
+    Nodo_Sintactico* nodo=new Nodo_Sintactico("programa");
+    while(lexico->tipo()==Tipo_Token::IDENTIFICADOR){
+        auto aux=A();
+        if(aux!= nullptr) nodo->hijos.push_back(aux);
+        else return nullptr;
+    }
+    return nodo;
+}
+Nodo_Sintactico * Parser::E() {
+    Nodo_Sintactico* aux,*res;
+    aux=M();
+    if(aux!= nullptr)
+    {
+        res=aux;
         while (comprueba(Tipo_Token::OP_SUMA))
         {
-            if(!M()) return false;
+            aux=new Nodo_Sintactico("suma");
+            aux->hijos.push_back(res);
+            res=aux;
+            aux=M();
+            if(aux== nullptr) return nullptr;
+            else {
+                res->hijos.push_back(aux);
+            }
         }
-        return true;
+        aux=new Nodo_Sintactico("expresion");
+        aux->hijos.push_back(res);
+        res=aux;
+        return res;
     }
-    else return false;
+    else return nullptr;
 }
 
 bool Parser::analiza() {
-    return S() && comprueba(Tipo_Token::END);
+    auto nodo=S();
+    pre_pos_orden(nodo, [](Nodo_Sintactico *nodo) {
+        std::cout<<"<"<< nodo->etiqueta << ">" << nodo->contenido << std::endl;
+    },
+    [](Nodo_Sintactico *nodo)
+    {
+        std::cout<<"</"<< nodo->etiqueta << ">"<< std::endl;
+    }
+    );
+    return nodo!= nullptr;
+    //return S() && comprueba(Tipo_Token::END);
 }
