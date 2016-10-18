@@ -8,13 +8,18 @@
 
 #include <string>
 #include <vector>
+#include <bits/unique_ptr.h>
+class Nodo_Sintactico;
+
 class Nodo_Sintactico {
 public:
+    using puntero=std::unique_ptr<Nodo_Sintactico>;
     std::string etiqueta;
     std::string contenido;
-    std::vector<Nodo_Sintactico*> hijos;
+    std::vector<puntero> hijos;
     Nodo_Sintactico(std::string etiqueta,std::string contenido=""):etiqueta(etiqueta),contenido(contenido),hijos(){}
 
+    void agrega_hijo(puntero &&hijo);
 };
 
 template <class consumer> void preorden(Nodo_Sintactico *nodo, consumer funcion)
@@ -22,14 +27,14 @@ template <class consumer> void preorden(Nodo_Sintactico *nodo, consumer funcion)
     funcion(nodo);
     for(auto&& hijo:nodo->hijos)
     {
-        preorden(hijo, funcion);
+        preorden(hijo.get(), funcion);
     }
 }
 template <class consumer> void posorden(Nodo_Sintactico *nodo, consumer funcion)
 {
     for(auto&& hijo:nodo->hijos)
     {
-        preorden(hijo, funcion);
+        preorden(hijo.get(), funcion);
     }
     funcion(nodo);
 }
@@ -38,7 +43,7 @@ template <class consumer,class consumer2> void pre_pos_orden(Nodo_Sintactico *no
     prefuncion(nodo);
     for(auto&& hijo:nodo->hijos)
     {
-        pre_pos_orden(hijo, prefuncion,posfuncion);
+        pre_pos_orden(hijo.get(), prefuncion,posfuncion);
     }
     posfuncion(nodo);
 }
